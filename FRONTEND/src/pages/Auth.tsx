@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../api/client';
 import { useNavigate, Link } from 'react-router-dom'; // Importamos Link
-import { Mail, Lock, UserPlus, LogIn } from 'lucide-react'; // Iconos para que se vea mejor
+import { UserPlus, LogIn } from 'lucide-react'; // Iconos para que se vea mejor
 
 const Auth = ({ mode }: { mode: 'login' | 'register' }) => {
   const navigate = useNavigate();
