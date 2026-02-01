@@ -1,0 +1,36 @@
+# Configuración base para no repetir código
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: postgres
+  password: 123456  # <--- CAMBIA ESTO por tu contraseña real
+  host: localhost
+
+development:
+  <<: *default
+  database: talenthub_rails_db
+
+test:
+  <<: *default
+  database: talenthub_rails_test
+
+# Configuración de producción para Rails 8
+production:
+  primary: &primary_production
+    <<: *default
+    database: talenthub_rails_production
+    username: backend
+    password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
+  cache:
+    <<: *primary_production
+    database: talenthub_rails_production_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_production
+    database: talenthub_rails_production_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_production
+    database: talenthub_rails_production_cable
+    migrations_paths: db/cable_migrate
