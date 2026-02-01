@@ -3,11 +3,12 @@ export interface User {
   email: string;
 }
 
-export interface Job Application {
+// El nombre debe ir todo junto (PascalCase)
+export interface JobApplication {
   id: number;
   job_id: number;
   user_id: number;
   cv_url?: string;
-  job?: Partial<Job>;
+  job?: any; // O Partial<Job> si tienes esa interfaz definida
   user?: Partial<User>;
 }
