@@ -1,9 +1,13 @@
+# config/initializers/cors.rb
+
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins "http://localhost:5173" # O el puerto que uses en React
+    # Permite que tu frontend de Cloudflare se conecte
+    origins "https://01715bc7.talenthub-uqg.pages.dev"
+
     resource "*",
       headers: :any,
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
-      expose: ['Authorization'] # ESTO PERMITE QUE EL TOKEN PASE EL MURO
+      credentials: true
   end
 end
