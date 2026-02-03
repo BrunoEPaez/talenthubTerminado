@@ -1,17 +1,26 @@
-# app/controllers/api/sessions_controller.rb
-class Api::SessionsController < ApplicationController # ANTES: Devise::SessionsController
-  respond_to :json
+module Api
+  class SessionsController < ApplicationController
+    # Evita que Rails busque el token de autenticidad de formularios (CSRF)
+    skip_before_action :verify_authenticity_token, only: [:create]
 
-  def create
-    # Cambiamos la forma de recibir parámetros para que sea más robusta
-    user_params = params.require(:user).permit(:email, :password)
-    user = User.find_for_authentication(email: user_params[:email])
+    def create
+      # Intentamos obtener el email ya sea que venga dentro de :user o suelto
+      email = params[:user].present? ? params[:user][:email] : params[:email]
+      password = params[:user].present? ? params[:user][:password] : params[:password]
 
-    if user&.valid_password?(user_params[:password])
-      token = JsonWebToken.encode(user_id: user.id)
-      render json: { user: user, token: token }, status: :ok
-    else
-      render json: { error: 'Invalid email or password' }, status: :unauthorized
+      user = User.find_by(email: email)
+
+      if user&.valid_password?(password)
+        # Asegúrate de tener la clase JsonWebToken definida en lib/ o app/services/
+        token = JsonWebToken.encode(user_id: user.id)
+        
+        render json: { 
+          token: token, 
+          user: { id: user.id, email: user.email } 
+        }, status: :ok
+      else
+        render json: { error: 'Email o contraseña inválidos' }, status: :unauthorized
+      end
     end
   end
 end
