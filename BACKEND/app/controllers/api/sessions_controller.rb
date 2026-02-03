@@ -1,17 +1,19 @@
 module Api
   class SessionsController < ApplicationController
-    # Evita que Rails busque el token de autenticidad de formularios (CSRF)
-    skip_before_action :verify_authenticity_token, only: [:create]
+    # ELIMINADO: skip_before_action :verify_authenticity_token
+    # En Rails API mode, este callback no existe, por eso daba error 500 al iniciar.
 
     def create
-      # Intentamos obtener el email ya sea que venga dentro de :user o suelto
+      # Extraemos email y password independientemente de si vienen 
+      # envueltos en { "user": { ... } } o no.
       email = params[:user].present? ? params[:user][:email] : params[:email]
       password = params[:user].present? ? params[:user][:password] : params[:password]
 
       user = User.find_by(email: email)
 
+      # Verificamos la contraseña (funciona con Devise)
       if user&.valid_password?(password)
-        # Asegúrate de tener la clase JsonWebToken definida en lib/ o app/services/
+        # Generamos el token JWT
         token = JsonWebToken.encode(user_id: user.id)
         
         render json: { 
