@@ -12,8 +12,8 @@ Rails.application.configure do
   # Los informes de error completos están desactivados.
   config.consider_all_requests_local = false
 
-  # Caché de archivos públicos.
-  config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
+  # Caché de archivos públicos (Necesario para que Rails sirva assets si no usas Nginx).
+  config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present? || true
   config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
 
   # Almacenamiento de archivos (Active Storage).
@@ -21,11 +21,7 @@ Rails.application.configure do
 
   # Logs a STDOUT para que Koyeb los pueda leer.
   config.log_tags = [ :request_id ]
-  if ENV["RAILS_LOG_TO_STDOUT"].present?
-    config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
-  end
-
-  # Nivel de log (info por defecto).
+  config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
   # No saturar los logs con los health checks.
@@ -34,12 +30,28 @@ Rails.application.configure do
   # Desactivar reportes de deprecación.
   config.active_support.report_deprecations = false
 
-  # Configuración de caché, colas y cable (Rails 8 - Solid Stack)
-  config.cache_store = :solid_cache_store
-  config.active_job.queue_adapter = :solid_queue
+  # -----------------------------------------------------------------------
+  # CONFIGURACIÓN RAILS 8 - SOLID STACK (Cache, Queue, Cable)
+  # -----------------------------------------------------------------------
   
-  # Forzamos a Solid Cable a usar la conexión primaria definida en database.yml
-  config.solid_cable.connects_to = { database: { writing: :cable, reading: :cable } }
+  # 1. Configuración de Caché
+  config.cache_store = :solid_cache_store
+
+  # 2. Configuración de Colas (Background Jobs)
+  config.active_job.queue_adapter = :solid_queue
+
+  # 3. Configuración de Action Cable (Solid Cable)
+  # Usamos la llave estándar de action_cable en lugar de config.solid_cable
+  # para evitar errores de inicialización.
+  config.action_cable.adapter = :solid_cable
+
+  # Forzamos a que usen las conexiones definidas en database.yml después de inicializar
+  config.after_initialize do
+    SolidCable.connects_to = { database: { writing: :cable, reading: :cable } } if defined?(SolidCable)
+    SolidCache.connects_to = { database: { writing: :cache, reading: :cache } } if defined?(SolidCache)
+    SolidQueue.connects_to = { database: { writing: :queue, reading: :queue } } if defined?(SolidQueue)
+  end
+  # -----------------------------------------------------------------------
 
   # Internacionalización.
   config.i18n.fallbacks = true
@@ -47,7 +59,7 @@ Rails.application.configure do
   # No volcar el esquema después de migraciones.
   config.active_record.dump_schema_after_migration = false
 
-  # Atributos visibles en inspecciones (puedes añadir más si quieres verlos en consola)
+  # Atributos visibles en inspecciones.
   config.active_record.attributes_for_inspect = [ :id ]
 
   # ==========================================
@@ -58,10 +70,4 @@ Rails.application.configure do
   
   # También permitimos específicamente la ruta /up por seguridad.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
-
-  # Forzar a los componentes Solid a usar la conexión principal
-  config.solid_cache.connects_to = { database: { writing: :primary } }
-  config.solid_queue.connects_to = { database: { writing: :primary } }
-  config.solid_cable.connects_to = { database: { writing: :primary } }
-
 end
