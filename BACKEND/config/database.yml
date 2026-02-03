@@ -10,7 +10,7 @@ development:
   host: localhost
   username: postgres
   password: 123456
-  url:  # En desarrollo dejamos la URL vacía para que use los datos de arriba
+  url: # En desarrollo usamos los datos de arriba
 
 test:
   <<: *default
@@ -20,11 +20,15 @@ test:
   password: 123456
 
 production:
-  <<: *default
-  # Forzamos a que todas las funciones usen la misma base de datos de Supabase
+  primary: &primary_production
+    <<: *default
+  # Rails 8 busca específicamente estas llaves para los motores Solid
   cache:
-    <<: *default
+    <<: *primary_production
+    migrations_paths: db/cache_migrate
   queue:
-    <<: *default
+    <<: *primary_production
+    migrations_paths: db/queue_migrate
   cable:
-    <<: *default
+    <<: *primary_production
+    migrations_paths: db/cable_migrate
