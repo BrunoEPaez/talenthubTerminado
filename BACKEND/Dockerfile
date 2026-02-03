@@ -14,9 +14,11 @@ RUN bundle install
 # 5. Copiamos todo el resto del código del backend
 COPY . .
 
-# 6. Forzamos a Rails a usar el puerto 3000 y ser visible para internet
+# Forzamos el entorno de producción y el puerto
+ENV RAILS_ENV=production
 ENV PORT=3000
+
 EXPOSE 3000
 
-# 7. El comando de arranque definitivo
-CMD ["rails", "server", "-b", "0.0.0.0", "-p", "3000"]  
+# El comando con la bandera de producción
+CMD ["rails", "server", "-b", "0.0.0.0", "-p", "3000", "-e", "production"]
