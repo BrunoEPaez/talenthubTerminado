@@ -1,16 +1,16 @@
 import axios from 'axios';
 
-// 1. Obtenemos la URL del .env o usamos localhost por defecto
+// 1. Obtenemos la URL base del .env
 const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /**
- * 2. PARCHE DE SEGURIDAD PARA URLS
- * Si la URL del .env termina en /api, se lo quitamos.
- * Esto evita el error de rutas duplicadas como /api/api/login.
+ * 2. CONFIGURACIÓN DE LA BASE URL
+ * Forzamos a que la URL siempre termine en /api de forma limpia.
+ * Así, cuando hagas api.get('/jobs'), Axios pedirá automáticamente /api/jobs.
  */
 const API_BASE_URL = rawBaseUrl.endsWith('/api') 
-  ? rawBaseUrl.replace(/\/api$/, '') 
-  : rawBaseUrl;
+  ? rawBaseUrl 
+  : `${rawBaseUrl.replace(/\/$/, '')}/api`;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,7 +20,7 @@ export const api = axios.create({
   }
 });
 
-// Interceptor para inyectar el token JWT en el header Authorization
+// Interceptor para inyectar el token JWT
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -29,7 +29,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para manejar errores de respuesta (como el 401 Unauthorized)
+// Interceptor para errores
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -40,4 +40,4 @@ api.interceptors.response.use(
   }
 );
 
-// Force refresh: 2026-02-03_v1
+// Force refresh v2: Forzando prefijo /api
