@@ -1,5 +1,6 @@
 class Api::UsersController < ApplicationController
   # Eliminamos la línea que causaba el error de :verify_authenticity_token
+  skip_before_action :authenticate_user_from_token, only: [:create], raise: false
   
   def create
     user = User.new(sign_up_params)
