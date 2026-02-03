@@ -7,28 +7,20 @@ default: &default
 development:
   <<: *default
   database: talenthub_rails_db
-  host: localhost
-  username: postgres
-  password: 123456
-  url: # En desarrollo usamos los datos de arriba
 
 test:
   <<: *default
   database: talenthub_rails_test
-  host: localhost
-  username: postgres
-  password: 123456
 
 production:
-  primary: &primary_production
+  primary:
     <<: *default
-  # Rails 8 busca específicamente estas llaves para los motores Solid
   cache:
-    <<: *primary_production
+    <<: *default
     migrations_paths: db/cache_migrate
   queue:
-    <<: *primary_production
+    <<: *default
     migrations_paths: db/queue_migrate
   cable:
-    <<: *primary_production
+    <<: *default
     migrations_paths: db/cable_migrate

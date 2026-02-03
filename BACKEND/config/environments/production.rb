@@ -58,4 +58,10 @@ Rails.application.configure do
   
   # También permitimos específicamente la ruta /up por seguridad.
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Forzar a los componentes Solid a usar la conexión principal
+  config.solid_cache.connects_to = { database: { writing: :primary } }
+  config.solid_queue.connects_to = { database: { writing: :primary } }
+  config.solid_cable.connects_to = { database: { writing: :primary } }
+
 end
