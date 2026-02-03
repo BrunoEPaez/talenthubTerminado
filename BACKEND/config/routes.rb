@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  # Ruta de salud para que Koyeb sepa que la app está viva
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :api, defaults: { format: :json } do
