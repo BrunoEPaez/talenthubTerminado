@@ -1,14 +1,23 @@
-// src/api/client.ts
 import axios from 'axios';
 
-// Usamos import.meta.env para Vite. 
-// Si no existe la variable, por defecto usará localhost para que sigas trabajando tranquilo.
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+/**
+ * Obtenemos la URL del .env.
+ * Si en el .env pusiste "https://.../api", el parche de abajo lo corregirá 
+ * para que no se duplique al hacer las peticiones.
+ */
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+// PARCHE: Eliminamos el "/api" del final si existe.
+// Esto evita que al llamar a api.post('/api/login') se genere ".../api/api/login"
+const API_BASE_URL = rawBaseUrl.endsWith('/api') 
+  ? rawBaseUrl.replace(/\/api$/, '') 
+  : rawBaseUrl;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
   }
 });
 
@@ -22,13 +31,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Opcional: Interceptor para manejar errores globales (como sesiones expiradas)
+// Interceptor para manejar errores globales
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       console.warn("Sesión expirada o token inválido");
-      // Aquí podrías limpiar el localStorage y redirigir al login si quisieras
+      // Opcional: limpiar token si la sesión no es válida
       // localStorage.removeItem('token');
     }
     return Promise.reject(error);
