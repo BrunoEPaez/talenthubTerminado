@@ -2,6 +2,7 @@ default: &default
   adapter: postgresql
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= ENV['DATABASE_URL'] %>
 
 development:
   <<: *default
@@ -9,6 +10,7 @@ development:
   host: localhost
   username: postgres
   password: 123456
+  url:  # En desarrollo dejamos la URL vacía para que use los datos de arriba
 
 test:
   <<: *default
@@ -17,18 +19,12 @@ test:
   username: postgres
   password: 123456
 
-# EN PRODUCCIÓN IGNORAMOS TODO Y USAMOS LA URL DE SUPABASE
 production:
-  adapter: postgresql
-  # Rails leerá automáticamente la variable DATABASE_URL de Koyeb
-  url: <%= ENV['DATABASE_URL'] %>
-  # Desactivamos las bases de datos extra de Rails 8 para que no rompa Supabase
+  <<: *default
+  # Forzamos a que todas las funciones usen la misma base de datos de Supabase
   cache:
-    adapter: postgresql
-    url: <%= ENV['DATABASE_URL'] %>
+    <<: *default
   queue:
-    adapter: postgresql
-    url: <%= ENV['DATABASE_URL'] %>
+    <<: *default
   cable:
-    adapter: postgresql
-    url: <%= ENV['DATABASE_URL'] %>
+    <<: *default
