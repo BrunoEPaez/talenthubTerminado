@@ -21,4 +21,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # El comando con la bandera de producción
-CMD ["rails", "server", "-b", "0.0.0.0", "-p", "3000", "-e", "production"]
+CMD ["sh", "-c", "bin/rails db:migrate && bin/rails server -b 0.0.0.0 -p 3000 -e production"]
