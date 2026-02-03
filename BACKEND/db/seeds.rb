@@ -1,7 +1,18 @@
 # db/seeds.rb
-Job.destroy_all # Limpia los datos existentes para no duplicar
+puts "Limpiando base de datos..."
+Job.destroy_all
+User.destroy_all
 
-Job.create!([
+puts "Creando usuario de prueba..."
+# Ajusta los campos según tu modelo de User (ej. email, password)
+usuario = User.create!(
+  email: "admin@test.com",
+  password: "password123", 
+  password_confirmation: "password123"
+)
+
+puts "Creando empleos para #{usuario.email}..."
+usuario.jobs.create!([
   {
     title: "Desarrollador Ruby on Rails",
     company: "Tech Solutions",
@@ -20,4 +31,6 @@ Job.create!([
   }
 ])
 
-puts "¡Seeds creados con éxito! Creados #{Job.count} empleos."
+puts "¡Seeds completados!"
+puts "Usuario: admin@test.com / password123"
+puts "Empleos creados: #{Job.count}"
