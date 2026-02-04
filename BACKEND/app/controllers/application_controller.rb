@@ -1,6 +1,5 @@
-# app/controllers/application_controller.rb
 class ApplicationController < ActionController::API
-  # Este método lo llamarás en los controladores que QUIERAS proteger
+  # Método para proteger las rutas
   def authenticate_user_from_token
     header = request.headers['Authorization']
     if header.blank?
@@ -14,8 +13,10 @@ class ApplicationController < ActionController::API
       @current_user = User.find(decoded[:user_id])
     rescue ActiveRecord::RecordNotFound
       render json: { error: 'Usuario no encontrado' }, status: :unauthorized
+    rescue JWT::ExpiredSignature
+      render json: { error: 'El token ha expirado' }, status: :unauthorized
     rescue => e
-      render json: { error: 'Token inválido o expirado' }, status: :unauthorized
+      render json: { error: 'Token inválido' }, status: :unauthorized
     end
   end
 
