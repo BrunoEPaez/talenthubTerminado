@@ -13,7 +13,7 @@ const Auth = ({ mode }: { mode: 'login' | 'register' }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const endpoint = mode === 'login' ? '/api/login' : '/api/register';
+    const endpoint = mode === 'login' ? '/login' : '/register';
     
     // Validación básica para registro
     if (mode === 'register' && formData.password !== formData.password_confirmation) {
