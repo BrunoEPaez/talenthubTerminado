@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { Heart, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Heart, ArrowLeft, CheckCircle } from 'lucide-react'; // Quitamos AlertCircle de aquí
 import { useFavorites } from '../context/FavoritesContext';
 
 const JobDetail = () => {
@@ -21,12 +21,10 @@ const JobDetail = () => {
     const loadData = async () => {
       try {
         setLoading(true);
-        // 1. Cargar datos del trabajo
         const res = await api.get(`/jobs/${id}`);
         const jobData = res.data.job || res.data;
         setJob(jobData);
 
-        // 2. Verificar si el usuario ya está postulado consultando la DB
         if (token) {
           const appsRes = await api.get('/applications');
           const hasApplied = appsRes.data.some((app: any) => {
@@ -59,28 +57,22 @@ const JobDetail = () => {
     
     try {
       if (isApplied) {
-        // RETIRAR POSTULACIÓN
         await api.delete('/applications', { data: { job_id: id } });
         setIsApplied(false);
         alert("Postulación retirada.");
       } else {
-        // POSTULARSE
-        // Ya no buscamos en localStorage. Enviamos la petición y Rails 
-        // usará el CV que ya tiene guardado el usuario en el servidor.
-        const payload = { job_id: id };
-        
-        await api.post('/applications', payload);
+        // Enviamos el job_id. Rails usará el CV que el usuario ya tiene en el server.
+        await api.post('/applications', { job_id: id });
         setIsApplied(true);
         alert("¡Postulación enviada con éxito!");
       }
     } catch (err: any) {
       console.error("Error en postulación:", err);
-      // Si el backend responde con error porque falta el CV:
       if (err.response?.status === 422) {
-        alert("Asegúrate de haber subido tu CV en el Dashboard antes de postularte.");
+        alert("Por favor, sube tu CV en el Dashboard antes de postularte.");
         navigate('/dashboard');
       } else {
-        alert("Hubo un problema al procesar tu postulación.");
+        alert("Hubo un error al procesar la postulación.");
       }
     }
   };
@@ -143,9 +135,7 @@ const JobDetail = () => {
         <hr style={{ border: '0', borderTop: '1px solid #f1f5f9', margin: '30px 0' }} />
         
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: '#0f172a', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            Descripción del puesto
-          </h3>
+          <h3 style={{ color: '#0f172a', marginBottom: '15px' }}>Descripción del puesto</h3>
           <div 
             style={{ lineHeight: '1.8', fontSize: '1.1rem', color: '#334155', whiteSpace: 'pre-wrap' }}
             dangerouslySetInnerHTML={job.description?.includes('<') ? { __html: job.description } : undefined}
