@@ -19,11 +19,10 @@ Rails.application.configure do
 
   # Configuración Solid Stack
   config.cache_store = :solid_cache_store
-  config.active_job.queue_adapter = :solid_queue
   
-  # Action Cable se configura en config/cable.yml, eliminamos la línea de aquí
-  # para evitar el error NoMethodError: adapter=
-
+  # CAMBIO CLAVE: Usamos :inline para evitar el error de "solid_queue_jobs" exist
+  config.active_job.queue_adapter = :inline
+  
   config.i18n.fallbacks = true
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [ :id ]
