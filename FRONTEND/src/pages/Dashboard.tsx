@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import { Heart, Briefcase, Users, UploadCloud, MapPin, Building2, CheckCircle, ArrowRight } from 'lucide-react';
+import { Heart, Briefcase, Users, UploadCloud, MapPin, Building2, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
