@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { Heart, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Heart, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { useFavorites } from '../context/FavoritesContext';
 
 const JobDetail = () => {
@@ -23,17 +23,13 @@ const JobDetail = () => {
         setLoading(true);
         // 1. Cargar datos del trabajo
         const res = await api.get(`/jobs/${id}`);
-        // Manejamos si el objeto viene envuelto en { job: ... } o directo
         const jobData = res.data.job || res.data;
         setJob(jobData);
 
-        // 2. Verificar si el usuario ya está postulado consultando al backend
+        // 2. Verificar si el usuario ya está postulado consultando la DB
         if (token) {
           const appsRes = await api.get('/applications');
-          // El backend ahora devuelve un array de aplicaciones. 
-          // Buscamos si alguna coincide con el job_id actual.
           const hasApplied = appsRes.data.some((app: any) => {
-            // Comparamos el job_id interno de la aplicación con el id de la URL
             const appId = app.job_id || app.job?.id;
             return String(appId) === String(id);
           });
@@ -63,36 +59,29 @@ const JobDetail = () => {
     
     try {
       if (isApplied) {
-        // ❌ RETIRAR POSTULACIÓN
-        // Pasamos el job_id en el cuerpo para que el controlador lo encuentre
+        // RETIRAR POSTULACIÓN
         await api.delete('/applications', { data: { job_id: id } });
         setIsApplied(false);
         alert("Postulación retirada.");
       } else {
-        // 📝 POSTULARSE
-        const formData = new FormData();
-        formData.append('job_id', String(id));
+        // POSTULARSE
+        // Ya no buscamos en localStorage. Enviamos la petición y Rails 
+        // usará el CV que ya tiene guardado el usuario en el servidor.
+        const payload = { job_id: id };
         
-        // Intentamos obtener el CV del localStorage o del perfil
-        const userEmail = localStorage.getItem('userEmail');
-        const base64File = localStorage.getItem(`${userEmail}_cvFile`);
-        
-        if (!base64File) {
-          alert("Por favor, asegúrate de tener un CV cargado en tu perfil.");
-          return navigate('/dashboard');
-        }
-
-        const fileRes = await fetch(base64File);
-        const blob = await fileRes.blob();
-        formData.append('cv', blob, "mi_cv.pdf");
-
-        await api.post('/applications', formData);
+        await api.post('/applications', payload);
         setIsApplied(true);
         alert("¡Postulación enviada con éxito!");
       }
     } catch (err: any) {
       console.error("Error en postulación:", err);
-      alert("No se pudo procesar la postulación. Intenta de nuevo.");
+      // Si el backend responde con error porque falta el CV:
+      if (err.response?.status === 422) {
+        alert("Asegúrate de haber subido tu CV en el Dashboard antes de postularte.");
+        navigate('/dashboard');
+      } else {
+        alert("Hubo un problema al procesar tu postulación.");
+      }
     }
   };
 
@@ -134,11 +123,19 @@ const JobDetail = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                minWidth: '160px',
+                justifyContent: 'center'
               }}
             >
-              {isApplied && <CheckCircle size={18} />}
-              {isApplied ? 'Postulado' : 'Postularme'}
+              {isApplied ? (
+                <>
+                  <CheckCircle size={18} />
+                  <span>Postulado</span>
+                </>
+              ) : (
+                <span>Postularme</span>
+              )}
             </button>
           </div>
         </div>
@@ -146,7 +143,9 @@ const JobDetail = () => {
         <hr style={{ border: '0', borderTop: '1px solid #f1f5f9', margin: '30px 0' }} />
         
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: '#0f172a', marginBottom: '15px' }}>Descripción del puesto</h3>
+          <h3 style={{ color: '#0f172a', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            Descripción del puesto
+          </h3>
           <div 
             style={{ lineHeight: '1.8', fontSize: '1.1rem', color: '#334155', whiteSpace: 'pre-wrap' }}
             dangerouslySetInnerHTML={job.description?.includes('<') ? { __html: job.description } : undefined}
