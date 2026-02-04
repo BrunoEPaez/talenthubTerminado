@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   const userEmail = localStorage.getItem('userEmail');
   const [cvName, setCvName] = useState(localStorage.getItem(`${userEmail}_cvName`));
-  const API_BASE = "http://localhost:3000"; 
+  const API_BASE = "https://yucky-rina-emmanuelnovo-3439a4c7.koyeb.app"; 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,20 +41,29 @@ const Dashboard = () => {
   const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userEmail) return;
+
     const formData = new FormData();
     formData.append('cv', file);
-    formData.append('user_email', userEmail);
+    // Ya no es estrictamente necesario enviar el email porque el backend usa el Token
+
     try {
-      const res = await api.put('/api/profile/update_cv', formData);
-      setCvName(res.data.cv_name);
-      localStorage.setItem(`${userEmail}_cvName`, res.data.cv_name);
-      alert("CV actualizado correctamente");
-    } catch (err) { alert("Error al subir el CV."); }
+      // ✅ IMPORTANTE: Quitamos el '/' inicial si tu axios client ya tiene '/api'
+      const res = await api.put('profile/update_cv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      const newCvName = res.data.cv_name;
+      setCvName(newCvName);
+      localStorage.setItem(`${userEmail}_cvName`, newCvName);
+      alert("¡CV actualizado con éxito!");
+    } catch (err: any) { 
+      console.error(err);
+      alert(err.response?.data?.error || "Error al subir el CV."); 
+    }
   };
 
   return (
     <div className="feed-container" style={{ maxWidth: '900px', margin: '40px auto' }}>
-      {/* HEADER DEL PANEL */}
       <div className="dashboard-card" style={{ background: 'white', padding: '30px', borderRadius: '24px', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -71,7 +80,6 @@ const Dashboard = () => {
         </p>}
       </div>
 
-      {/* TABS NAVEGACIÓN */}
       <div className="tabs-container" style={{ display: 'flex', gap: '15px', marginBottom: '30px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
         <button className={`tab-btn-modern ${tab === 'favs' ? 'active' : ''}`} onClick={() => setTab('favs')}><Heart size={18}/> Favoritos</button>
         <button className={`tab-btn-modern ${tab === 'applied' ? 'active' : ''}`} onClick={() => setTab('applied')}><Briefcase size={18}/> Mis Postulaciones</button>
@@ -81,8 +89,6 @@ const Dashboard = () => {
       <div className="tab-content">
         {loading ? <div className="spinner" style={{margin: '50px auto'}}></div> : (
           <div className="jobs-list">
-            
-            {/* TAB FAVORITOS */}
             {tab === 'favs' && (
               favorites.length > 0 ? favorites.map(f => {
                 const job = f.job || f;
@@ -94,7 +100,7 @@ const Dashboard = () => {
                       <p style={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px', margin: '5px 0' }}>
                         <Building2 size={14}/> {job.company}
                       </p>
-                      <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Haz clic para ver la descripción completa →</span>
+                      <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Haz clic para ver más →</span>
                     </div>
                     <Heart size={22} fill="#ef4444" color="#ef4444" />
                   </div>
@@ -102,7 +108,6 @@ const Dashboard = () => {
               }) : <p className="empty-state">No tienes favoritos guardados.</p>
             )}
             
-            {/* TAB MIS POSTULACIONES */}
             {tab === 'applied' && (
               myApplications.length > 0 ? myApplications.map(app => {
                 const job = app.job || app;
@@ -110,98 +115,44 @@ const Dashboard = () => {
                 return (
                   <div key={app.id} className="job-card-premium clickable-card" onClick={() => navigate(`/job/${jobId}`)}>
                     <div className="job-info-main">
-                      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                        <span className="badge-premium" style={{fontSize: '0.7rem'}}>{job.job_type || 'Jornada'}</span>
-                        <span className="badge-premium" style={{fontSize: '0.7rem', background: '#f0fdf4', color: '#16a34a'}}>{job.modality || 'Presencial'}</span>
-                      </div>
                       <h3 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>{job.title || job.job_title}</h3>
-                      <div style={{ display: 'flex', gap: '20px', color: '#64748b', fontSize: '0.95rem', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', gap: '20px', color: '#64748b', fontSize: '0.95rem' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Building2 size={16}/> {job.company}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MapPin size={16}/> {job.location}</span>
                       </div>
-                      <p style={{ fontSize: '0.9rem', color: '#64748b', lineClamp: 2, WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {job.description || "Toca para ver los detalles de esta oferta y los requisitos."}
-                      </p>
                     </div>
-                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                      <span className="status-pill">Postulado</span>
-                      <ArrowRight size={20} color="#cbd5e1" style={{ marginTop: '15px' }} />
-                    </div>
+                    <span className="status-pill">Postulado</span>
                   </div>
                 )
-              }) : <p className="empty-state">Aún no te has postulado a ninguna oferta.</p>
+              }) : <p className="empty-state">Aún no te has postulado.</p>
             )}
 
-            {/* TAB CANDIDATOS */}
             {tab === 'my-posts' && (
               receivedApplications.length > 0 ? receivedApplications.map(app => (
-                <div key={app.id} className="job-card-premium" style={{ cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div key={app.id} className="job-card-premium" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{app.user_email || app.email}</h3>
-                    <p style={{ marginTop: '5px', color: '#64748b' }}>Postulado a: <span style={{ color: '#2563eb', fontWeight: '500' }}>{app.job_title || (app.job && app.job.title)}</span></p>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{app.user_email || app.user?.email}</h3>
+                    <p style={{ color: '#64748b' }}>Trabajo: {app.job_title || app.job?.title}</p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn-secondary" onClick={() => app.cv_url ? window.open(`${API_BASE}${app.cv_url}`, '_blank') : alert("No hay CV disponible")}>Ver CV</button>
-                    <a href={`mailto:${app.user_email || app.email}`} className="btn-primary-small">Contactar</a>
+                    <button className="btn-secondary" onClick={() => app.cv_url ? window.open(`${API_BASE}${app.cv_url}`, '_blank') : alert("No hay CV")}>Ver CV</button>
+                    <a href={`mailto:${app.user_email}`} className="btn-primary-small">Contactar</a>
                   </div>
                 </div>
-              )) : <p className="empty-state">No has recibido candidatos aún.</p>
+              )) : <p className="empty-state">Sin candidatos nuevos.</p>
             )}
           </div>
         )}
       </div>
 
       <style>{`
-        .clickable-card {
-          cursor: pointer;
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .clickable-card:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 12px 25px rgba(0,0,0,0.1) !important;
-          border-color: #2563eb;
-        }
-        .tab-btn-modern {
-          background: none;
-          border: none;
-          padding: 10px 20px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-weight: 500;
-          color: #64748b;
-          transition: all 0.3s;
-          border-radius: 12px;
-        }
-        .tab-btn-modern.active {
-          color: #2563eb;
-          background: #eff6ff;
-        }
-        .status-pill {
-          background: #ecfdf5;
-          color: #059669;
-          padding: 6px 14px;
-          border-radius: 20px;
-          font-size: 0.8rem;
-          font-weight: 600;
-          border: 1px solid #d1fae5;
-        }
-        .empty-state {
-          text-align: center;
-          padding: 50px;
-          color: #94a3b8;
-          font-size: 1.1rem;
-        }
-        .btn-primary-small {
-          background: #0f172a;
-          color: white;
-          padding: 8px 16px;
-          border-radius: 10px;
-          text-decoration: none;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
+        .clickable-card { cursor: pointer; transition: 0.2s; }
+        .clickable-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+        .tab-btn-modern { background: none; border: none; padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; color: #64748b; border-radius: 12px; }
+        .tab-btn-modern.active { color: #2563eb; background: #eff6ff; }
+        .status-pill { background: #ecfdf5; color: #059669; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .empty-state { text-align: center; padding: 50px; color: #94a3b8; }
+        .btn-primary-small { background: #0f172a; color: white; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; }
       `}</style>
     </div>
   );
