@@ -31,5 +31,5 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# 10. Comando de arranque
-CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+# 10. Forzamos la migración antes de encender el servidor
+CMD sh -c "bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0 -p 3000"
