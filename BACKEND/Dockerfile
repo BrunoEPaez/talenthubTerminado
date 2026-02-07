@@ -27,4 +27,4 @@ EXPOSE 3000
 
 # 8. Comando de arranque: Migrar + Servidor
 # Usamos "bundle exec" para evitar problemas de rutas
-CMD ["sh", "-c", "bundle exec rails db:migrate && bundle exec puma -C config/puma.rb"]
+CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "3000"]
