@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   const userEmail = localStorage.getItem('userEmail');
   const [cvName, setCvName] = useState(localStorage.getItem(`${userEmail}_cvName`));
-  const API_BASE = "https://talenthubterminado.onrender.com"; 
+  const API_BASE = "https://talenthubterminado.onrender.com/api"; 
 
   useEffect(() => {
     const fetchData = async () => {

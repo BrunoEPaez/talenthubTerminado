@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // FORZAMOS LA URL DIRECTAMENTE AQUÍ
-const API_BASE_URL = 'https://talenthubterminado.onrender.com';
+const API_BASE_URL = 'https://talenthubterminado.onrender.com/api';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
