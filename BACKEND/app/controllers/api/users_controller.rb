@@ -1,6 +1,6 @@
 module Api
   class UsersController < ApplicationController
-    # El registro no necesita token, pero update_cv SÍ lo necesita por seguridad
+    # El registro no necesita token
     skip_before_action :authenticate_user_from_token, only: [:create], raise: false
     before_action :authenticate_user_from_token, only: [:update_cv]
 
@@ -8,8 +8,12 @@ module Api
     def create
       user = User.new(sign_up_params)
       if user.save
+        # Asegúrate de tener la clase JsonWebToken definida en lib/ o app/services/
         token = JsonWebToken.encode(user_id: user.id)
-        render json: { user: user, token: token }, status: :created
+        render json: { 
+          user: { id: user.id, email: user.email }, 
+          token: token 
+        }, status: :created
       else
         render json: { errors: user.errors.full_messages }, status: :unprocessable_entity
       end
@@ -17,12 +21,10 @@ module Api
 
     # PUT /api/profile/update_cv
     def update_cv
-      # @current_user ya viene definido por el método authenticate_user_from_token
       if params[:cv].present?
         @current_user.cv.attach(params[:cv])
         
         if @current_user.save
-          # Generamos la URL completa del archivo
           cv_url = Rails.application.routes.url_helpers.rails_blob_url(@current_user.cv, only_path: true)
           
           render json: { 

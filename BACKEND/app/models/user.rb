@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  # Si usas Devise
+  # Configuración de Devise
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
 
@@ -11,5 +11,9 @@ class User < ApplicationRecord
   has_many :applied_jobs, through: :applications, source: :job
 
   # Active Storage para el Currículum
+  # Asegúrate de tener instalada la gema 'active_storage' y sus tablas
   has_one_attached :cv
+
+  # Validaciones adicionales (Opcional, Devise ya valida email y password)
+  validates :email, presence: true, uniqueness: true
 end
