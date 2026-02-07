@@ -27,4 +27,4 @@ EXPOSE 3000
 
 # 8. Comando de arranque: Migrar + Servidor
 # Usamos "bundle exec" para evitar problemas de rutas
-CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0", "-p", "3000"]
+CMD ["sh", "-c", "bundle exec rails db:migrate && bundle exec rails server -b 0.0.0.0 -p 3000"]
