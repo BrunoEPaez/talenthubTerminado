@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // FORZAMOS LA URL DIRECTAMENTE AQUÍ
-const API_BASE_URL = 'https://yucky-rina-emmanuelnovo-3439a4c7.koyeb.app/api';
+const API_BASE_URL = 'https://talenthubterminado.onrender.com';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

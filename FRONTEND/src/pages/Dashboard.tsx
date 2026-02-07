@@ -13,7 +13,7 @@ const Dashboard = () => {
 
   const userEmail = localStorage.getItem('userEmail');
   const [cvName, setCvName] = useState(localStorage.getItem(`${userEmail}_cvName`));
-  const API_BASE = "https://yucky-rina-emmanuelnovo-3439a4c7.koyeb.app"; 
+  const API_BASE = "https://talenthubterminado.onrender.com"; 
 
   useEffect(() => {
     const fetchData = async () => {
