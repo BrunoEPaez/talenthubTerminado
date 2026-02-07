@@ -1,14 +1,19 @@
 #!/bin/bash
 set -e
 
-# Limpiar PIDs antiguos
+# Borrar PIDs de sesiones anteriores
 if [ -f /app/tmp/pids/server.pid ]; then
   rm /app/tmp/pids/server.pid
 fi
 
-# Correr migraciones o configurar base si está vacía
-echo "Configurando base de datos..."
-bundle exec rails db:migrate || bundle exec rails db:setup
+# Intentar preparar la base de datos (Migrar o Crear si no existe)
+echo "== Preparando la base de datos =="
+bundle exec rails db:prepare
 
-# Iniciar el proceso principal
+# Si tienes datos iniciales (opcional)
+# bundle exec rails db:seed 
+
+echo "== Base de datos lista. Arrancando servidor... =="
+
+# Ejecuta el comando principal (el CMD del Dockerfile)
 exec "$@"
