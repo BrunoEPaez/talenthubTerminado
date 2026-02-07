@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  # Esta es la ruta que Render necesita para confirmar que la app está viva
+  # Responderá en la URL principal (ej: https://tu-app.onrender.com/)
+  root to: "rails/health#show"
+
+  # Ruta de salud estándar de Rails
   get "up" => "rails/health#show", as: :rails_health_check
 
   namespace :api, defaults: { format: :json } do
