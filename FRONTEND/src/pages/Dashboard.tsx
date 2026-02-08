@@ -13,28 +13,37 @@ const Dashboard = () => {
 
   const userEmail = localStorage.getItem('userEmail');
   const [cvName, setCvName] = useState(localStorage.getItem(`${userEmail}_cvName`));
-  const API_BASE = "https://talenthubterminado.onrender.com/api"; 
+  
+  // Base para las URLs de los archivos (CVs)
+  const API_BASE = "https://talenthubterminado.onrender.com"; 
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [favsRes, appsRes, receivedRes] = await Promise.all([
-          api.get('/favorites').catch(() => ({ data: [] })),
-          api.get('/applications').catch(() => ({ data: [] })),
-          api.get('/my_job_applications').catch(() => ({ data: [] }))
-        ]);
-
-        setFavorites(Array.isArray(favsRes.data) ? favsRes.data : (favsRes.data.favorites || []));
-        setMyApplications(Array.isArray(appsRes.data) ? appsRes.data : (appsRes.data.applications || []));
-        setReceivedApplications(Array.isArray(receivedRes.data) ? receivedRes.data : (receivedRes.data.received || receivedRes.data.applications || []));
         
+        // --- OPTIMIZACIÓN: CARGA SECUENCIAL ---
+        // Hacemos las peticiones una por una para evitar el error "prepared statement already exists"
+        
+        // 1. Cargar Favoritos
+        const favsRes = await api.get('/favorites').catch(() => ({ data: [] }));
+        setFavorites(Array.isArray(favsRes.data) ? favsRes.data : (favsRes.data.favorites || []));
+
+        // 2. Cargar Mis Postulaciones
+        const appsRes = await api.get('/applications').catch(() => ({ data: [] }));
+        setMyApplications(Array.isArray(appsRes.data) ? appsRes.data : (appsRes.data.applications || []));
+
+        // 3. Cargar Candidatos (si soy reclutador)
+        const receivedRes = await api.get('/my_job_applications').catch(() => ({ data: [] }));
+        setReceivedApplications(Array.isArray(receivedRes.data) ? receivedRes.data : (receivedRes.data.received || receivedRes.data.applications || []));
+
       } catch (err) {
         console.error("Error al cargar datos del dashboard", err);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchData();
   }, []);
 
@@ -44,10 +53,8 @@ const Dashboard = () => {
 
     const formData = new FormData();
     formData.append('cv', file);
-    // Ya no es estrictamente necesario enviar el email porque el backend usa el Token
 
     try {
-      // ✅ IMPORTANTE: Quitamos el '/' inicial si tu axios client ya tiene '/api'
       const res = await api.put('profile/update_cv', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -64,6 +71,7 @@ const Dashboard = () => {
 
   return (
     <div className="feed-container" style={{ maxWidth: '900px', margin: '40px auto' }}>
+      {/* Tarjeta de Perfil y CV */}
       <div className="dashboard-card" style={{ background: 'white', padding: '30px', borderRadius: '24px', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: '1px solid #f1f5f9' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -75,20 +83,27 @@ const Dashboard = () => {
             <input type="file" hidden accept=".pdf" onChange={handleCvUpload} />
           </label>
         </div>
-        {cvName && <p style={{ fontSize: '0.85rem', color: '#10b981', marginTop: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <CheckCircle size={14} /> CV Activo: {cvName}
-        </p>}
+        {cvName && (
+          <p style={{ fontSize: '0.85rem', color: '#10b981', marginTop: '15px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <CheckCircle size={14} /> CV Activo: {cvName}
+          </p>
+        )}
       </div>
 
+      {/* Navegación de Pestañas */}
       <div className="tabs-container" style={{ display: 'flex', gap: '15px', marginBottom: '30px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
         <button className={`tab-btn-modern ${tab === 'favs' ? 'active' : ''}`} onClick={() => setTab('favs')}><Heart size={18}/> Favoritos</button>
         <button className={`tab-btn-modern ${tab === 'applied' ? 'active' : ''}`} onClick={() => setTab('applied')}><Briefcase size={18}/> Mis Postulaciones</button>
         <button className={`tab-btn-modern ${tab === 'my-posts' ? 'active' : ''}`} onClick={() => setTab('my-posts')}><Users size={18}/> Candidatos</button>
       </div>
 
+      {/* Contenido de la Pestaña */}
       <div className="tab-content">
-        {loading ? <div className="spinner" style={{margin: '50px auto'}}></div> : (
+        {loading ? (
+          <div className="spinner" style={{margin: '50px auto'}}></div>
+        ) : (
           <div className="jobs-list">
+            {/* Pestaña: Favoritos */}
             {tab === 'favs' && (
               favorites.length > 0 ? favorites.map(f => {
                 const job = f.job || f;
@@ -108,6 +123,7 @@ const Dashboard = () => {
               }) : <p className="empty-state">No tienes favoritos guardados.</p>
             )}
             
+            {/* Pestaña: Mis Postulaciones */}
             {tab === 'applied' && (
               myApplications.length > 0 ? myApplications.map(app => {
                 const job = app.job || app;
@@ -127,6 +143,7 @@ const Dashboard = () => {
               }) : <p className="empty-state">Aún no te has postulado.</p>
             )}
 
+            {/* Pestaña: Candidatos Recibidos */}
             {tab === 'my-posts' && (
               receivedApplications.length > 0 ? receivedApplications.map(app => (
                 <div key={app.id} className="job-card-premium" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -135,8 +152,13 @@ const Dashboard = () => {
                     <p style={{ color: '#64748b' }}>Trabajo: {app.job_title || app.job?.title}</p>
                   </div>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn-secondary" onClick={() => app.cv_url ? window.open(`${API_BASE}${app.cv_url}`, '_blank') : alert("No hay CV")}>Ver CV</button>
-                    <a href={`mailto:${app.user_email}`} className="btn-primary-small">Contactar</a>
+                    <button 
+                      className="btn-secondary" 
+                      onClick={() => app.cv_url ? window.open(`${API_BASE}${app.cv_url}`, '_blank') : alert("No hay CV")}
+                    >
+                      Ver CV
+                    </button>
+                    <a href={`mailto:${app.user_email || app.user?.email}`} className="btn-primary-small">Contactar</a>
                   </div>
                 </div>
               )) : <p className="empty-state">Sin candidatos nuevos.</p>
@@ -148,11 +170,12 @@ const Dashboard = () => {
       <style>{`
         .clickable-card { cursor: pointer; transition: 0.2s; }
         .clickable-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-        .tab-btn-modern { background: none; border: none; padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; color: #64748b; border-radius: 12px; }
+        .tab-btn-modern { background: none; border: none; padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; color: #64748b; border-radius: 12px; transition: 0.3s; }
+        .tab-btn-modern:hover { background: #f8fafc; }
         .tab-btn-modern.active { color: #2563eb; background: #eff6ff; }
         .status-pill { background: #ecfdf5; color: #059669; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-        .empty-state { text-align: center; padding: 50px; color: #94a3b8; }
-        .btn-primary-small { background: #0f172a; color: white; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; }
+        .empty-state { text-align: center; padding: 50px; color: #94a3b8; width: 100%; }
+        .btn-primary-small { background: #0f172a; color: white; padding: 8px 16px; border-radius: 10px; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
       `}</style>
     </div>
   );

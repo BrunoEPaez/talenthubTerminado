@@ -1,7 +1,8 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  # Aumentamos un poco el pool para manejar mejor las ráfagas del Dashboard
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
   url: <%= ENV['DATABASE_URL'] %>
 
 development:
@@ -15,6 +16,10 @@ test:
 production:
   primary: &primary_production
     <<: *default
+    # ESTO ES LO MÁS IMPORTANTE: evita los errores de protocolo en Supabase/Render
+    prepared_statements: false
+  
+  # Si usas Solid Cache o Solid Queue (Rails 8), aplica también aquí:
   cache:
     <<: *primary_production
     migrations_paths: db/cache_migrate
